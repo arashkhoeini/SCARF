@@ -4,6 +4,7 @@ from data.utils import init_data_loaders
 import pandas as pd
 from data import dataset
 from model.loss import NTXent
+from tqdm import tqdm
 from sklearn.metrics import accuracy_score, f1_score
 
 
@@ -24,7 +25,7 @@ class Trainer():
             return dataset.TabularDataset(df_dataset)
         
     def run(self):
-        #self.pretrain()
+        self.pretrain()
         self.finetune()
         self.test()
 
@@ -38,7 +39,8 @@ class Trainer():
 
         es_patience = 0
         prev_val_loss = 1000
-        for iteration in range(self.configs.n_epochs):
+        pbar = tqdm(range(self.configs.n_epochs))
+        for iteration in pbar:
             epoch_loss = 0
             for x, x_corrupted, y in self.pretrain_loader:
                 if self.configs.cuda:
@@ -54,11 +56,11 @@ class Trainer():
                 
                 epoch_loss += loss.item()
             val_loss, _ = self.evaluate()
-            if self.configs.verbose:
-                print(f"\tVal SS Loss: {val_loss[0]:.3f}")
+
+            pbar.set_postfix(train_loss=epoch_loss, val_loss=float(f"{val_loss[0]:.3f}"))
+
             if  prev_val_loss <= val_loss[0]:
                 if es_patience+1 < self.configs.early_stoping_patience:
-                    print("Patience++")
                     es_patience += 1
                 else:
                     if self.configs.verbose:
@@ -68,7 +70,7 @@ class Trainer():
                 es_patience = 0
             prev_val_loss = val_loss[0]
             
-            print(f"Loss: {loss.item():.3f}")
+        
 
 
     def finetune(self):
@@ -80,7 +82,8 @@ class Trainer():
         
         es_patience = 0
         prev_val_acc = 0
-        for iteration in range(self.configs.n_epochs):
+        pbar = tqdm(range(self.configs.n_epochs))
+        for iteration in pbar:
             epoch_loss = 0
             for x, _, y in self.finetune_loader:
                 if self.configs.cuda:
@@ -93,19 +96,20 @@ class Trainer():
 
                 epoch_loss += loss.item()
             _, metrics = self.evaluate()
-            if self.configs.verbose:
-                print(f"Val accuracy: {metrics['accuracy']:.3f}")
+            
+            pbar.set_postfix(train_loss=epoch_loss, val_acc=float(f"{metrics['accuracy']:.3f}"))
+
             if metrics['accuracy'] - prev_val_acc < self.configs.finetuning_early_stoping_threshold:
                 if es_patience+1 < self.configs.early_stoping_patience:
                     es_patience += 1
                 else:
                     if self.configs.verbose:
                         print(f"Early stopping at iteration {iteration}")
-                    # break
+                    break
             else:
                 es_patience = 0
             prev_val_acc = metrics['accuracy']        
-            print(f"Loss: {epoch_loss:.3f}")
+            
         
 
     def evaluate(self):
