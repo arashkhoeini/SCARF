@@ -1,0 +1,18 @@
+experiment: 'openml'
+data_dir: '/Users/arash/Developer/datasets/openml-cc18/csv'
+cuda: False
+rep_size: 32
+encoder_dims: [256, 256]
+pretraining_head_dims: [256]
+prediction_head_dims: [16]
+fix_seed: True
+seed: 1234
+pretrain_lr: 0.0001
+finetune_lr: 0.001
+batch_size: 128
+n_epochs: 100
+verbose: True
+
+early_stoping_patience: 3
+pretraining_early_stoping_threshold: 0.01
+finetuning_early_stoping_threshold: 0.01
