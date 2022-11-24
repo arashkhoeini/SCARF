@@ -59,16 +59,17 @@ class Trainer():
 
             pbar.set_postfix(train_loss=epoch_loss, val_loss=float(f"{val_loss[0]:.3f}"))
 
-            if  prev_val_loss <= val_loss[0]:
-                if es_patience+1 < self.configs.early_stoping_patience:
-                    es_patience += 1
+            if self.configs.pretraining_early_stopping:
+                if  prev_val_loss <= val_loss[0]:
+                    if es_patience+1 < self.configs.early_stoping_patience:
+                        es_patience += 1
+                    else:
+                        if self.configs.verbose:
+                            print(f"Early stopping at iteration {iteration}")
+                        break
                 else:
-                    if self.configs.verbose:
-                        print(f"Early stopping at iteration {iteration}")
-                    break
-            else:
-                es_patience = 0
-            prev_val_loss = val_loss[0]
+                    es_patience = 0
+                prev_val_loss = val_loss[0]
             
         
 
@@ -98,17 +99,18 @@ class Trainer():
             _, metrics = self.evaluate()
             
             pbar.set_postfix(train_loss=epoch_loss, val_acc=float(f"{metrics['accuracy']:.3f}"))
-
-            if metrics['accuracy'] - prev_val_acc < self.configs.finetuning_early_stoping_threshold:
-                if es_patience+1 < self.configs.early_stoping_patience:
-                    es_patience += 1
+            
+            if self.configs.finetuning_early_stopping:
+                if metrics['accuracy'] - prev_val_acc < self.configs.finetuning_early_stoping_threshold:
+                    if es_patience+1 < self.configs.early_stoping_patience:
+                        es_patience += 1
+                    else:
+                        if self.configs.verbose:
+                            print(f"Early stopping at iteration {iteration}")
+                        break
                 else:
-                    if self.configs.verbose:
-                        print(f"Early stopping at iteration {iteration}")
-                    break
-            else:
-                es_patience = 0
-            prev_val_acc = metrics['accuracy']        
+                    es_patience = 0
+                prev_val_acc = metrics['accuracy']        
             
         
 
